@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from modelos.clientes import Cliente, Cliente_crear
+from modelos.clientes import Cliente, Cliente_crear, Cliente_editar
 from pydantic import BaseModel, computed_field
 from modelos.transacciones import Transaccion, TransaccionCrear
 from datetime import datetime
@@ -12,23 +12,34 @@ Lista_facturas: list[Factura] = []
 Lista_transacciones: list[Transaccion] = []
 
 @app.get("/clientes", response_model=list[Cliente])
-def listar_clientes():
+async def listar_clientes():
     return Lista_clientes
 
 #obtner un cliente
 @app.get("/clientes/{cliente_id}", response_model=Cliente)
-def listar_cliente(cliente_id: int):
+async def listar_cliente(cliente_id: int):
     for cliente in Lista_clientes: # ¿porque no se tiene el enumerate y aun asi funciona? Porque no se necesita el indice del cliente, solo se necesita el cliente en si para compararlo con el id que se esta buscando.
-        if cliente["id"] == cliente_id:
+        if cliente.id == cliente_id:
             return cliente
-    return {"error": "Cliente no encontrado"}
 
 #crear un cliente
 @app.post("/clientes", response_model=Cliente)
-def crear_cliente(datos_cliente: Cliente_crear):
+async def crear_cliente(datos_cliente: Cliente_crear):
     cliente_val = Cliente.model_validate(datos_cliente.model_dump())
+    id_cliente = len(Lista_clientes) + 1
+    cliente_val.id = id_cliente
     Lista_clientes.append(cliente_val)
     return cliente_val
+
+@app.patch("/clientes/{cliente_id}", response_model=Cliente)
+async def editar_cliente(cliente_id: int,datos_cliente: Cliente_editar):
+    for i, cliente in enumerate(Lista_clientes): # ¿porque no se tiene el enumerate y aun asi funciona? Porque no se necesita el indice del cliente, solo se necesita el cliente en si para compararlo con el id que se esta buscando.
+        if cliente.id == cliente_id:
+            cliente_val = Cliente.model_validate(datos_cliente.model_dump())
+            cliente_val.id = cliente_id
+            Lista_clientes[i] = cliente_val
+            return cliente_val
+    raise HTTPException(status_code=400, detail=f"el cliente con id {cliente_id}, no exite.")
 
 @app.get("/facturas", response_model=list[Factura])
 def listar_facturas():
