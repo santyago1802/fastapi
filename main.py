@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status
 from modelos.clientes import Cliente, Cliente_crear, Cliente_editar
 from pydantic import BaseModel, computed_field
 from modelos.transacciones import Transaccion, TransaccionCrear
@@ -21,6 +21,10 @@ async def listar_cliente(cliente_id: int):
     for cliente in Lista_clientes: # ¿porque no se tiene el enumerate y aun asi funciona? Porque no se necesita el indice del cliente, solo se necesita el cliente en si para compararlo con el id que se esta buscando.
         if cliente.id == cliente_id:
             return cliente
+        raise HTTPException(
+            status_code=400,
+            detail=f"El cliente con id {cliente_id} no existe."
+        )
 
 #crear un cliente
 @app.post("/clientes", response_model=Cliente)
@@ -41,17 +45,35 @@ async def editar_cliente(cliente_id: int,datos_cliente: Cliente_editar):
             return cliente_val
     raise HTTPException(status_code=400, detail=f"el cliente con id {cliente_id}, no exite.")
 
+@app.delete("/clientes/{cliente_id}")
+async def eliminar_cliente(cliente_id: int):
+
+    for i, cliente in enumerate(Lista_clientes):
+        if cliente.id == cliente_id:
+            cliente_eliminado = Lista_clientes.pop(i)
+            return {
+                "mensaje": "Cliente eliminado correctamente",
+                "cliente": cliente_eliminado
+            }
+
+    raise HTTPException(
+        status_code=400,
+        detail=f"El cliente con id {cliente_id} no existe."
+    )
+
+#facturas
+
 @app.get("/facturas", response_model=list[Factura])
 def listar_facturas():
     return Lista_facturas
 
 @app.get("/facturas/{factura_id}", response_model=Factura)
-def obtener_factura(factura_id: int):
+async def listar_factura(factura_id: int):
     for factura in Lista_facturas:
         if factura.id == factura_id:
             return factura
 
-    raise HTTPException(status_code=404, detail="Factura no encontrada")
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Factura no encontrada")
 
 @app.post("/facturas", response_model=Factura)
 def crear_factura(datos_factura: FacturaCrear):
