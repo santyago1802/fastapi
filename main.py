@@ -117,8 +117,21 @@ def obtener_transaccion(transaccion_id: int):
 
     raise HTTPException(status_code=404, detail="Transacción no encontrada")
 
-@app.post("/transacciones", response_model=Transaccion)
-def crear_transaccion(datos_transaccion: TransaccionCrear):
-    transaccion = Transaccion.model_validate(datos_transaccion.model_dump())
-    Lista_transacciones.append(transaccion)
-    return transaccion
+@app.post("/transacciones/{factura_id}", response_model=Transaccion)
+async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear):
+    factura_encontrada = None
+    for factura in Lista_facturas:
+        if factura.id == factura_id:
+            factura_encontrada = factura
+        #mensaje si no existe el cliente
+        if not factura_encontrada:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"la factura con id {factura_id}, no existe."
+            )
+        
+    #validar datos de la factura
+    Transaccion_val = Transaccion.model_validate(datos_transaccion.model_dump())
+    Transaccion_val.factura_id = factura_id
+    factura_encontrada.transacciones.append(Transaccion_val)
+        #generar el id de la factura
+    Transaccion_val.id = len(Lista_transacciones) + 1
+    return Transaccion_val
