@@ -9,15 +9,6 @@ class FacturaBase(SQLModel):
     #cliente: Cliente
     #transacciones: list[Transaccion] = []
 
-    @computed_field
-    @property
-    def vr_total(self) -> float:
-        total_factura = 0.0
-        if self.transacciones == None:
-            return total_factura
-        for transaccion in self.transacciones:
-            total_factura += transaccion.vr_unitario * transaccion.cantidad
-            return total_factura
 
 class FacturaCrear(FacturaBase):
     pass
@@ -43,3 +34,14 @@ class Factura_leer_transacciones(FacturaBase):
     id: int
     cliente: Cliente_leer
     transacciones: list[Transaccion] = []
+
+    @computed_field
+    @property
+    def vr_total(self) -> float:
+        total_factura = 0.0
+        if self.transacciones == None:
+            return total_factura
+        for transaccion in self.transacciones:
+            total_factura += transaccion.vr_unitario * transaccion.cantidad
+
+        return total_factura

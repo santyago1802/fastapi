@@ -60,4 +60,5 @@ async def eliminar_cliente(cliente_id: int, mi_session: Session_dependencia):
         )
     mi_session.delete(cliente_bd)
     mi_session.commit()
+    mi_session.refresh(cliente_bd)
     return cliente_bd
